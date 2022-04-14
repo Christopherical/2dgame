@@ -12,8 +12,8 @@ bool Game::IsRunning() const { return this->isRunning; }
 
 float ProjectilePosX = 0.0f;
 float ProjectilePosY = 0.0f;
-float ProjectileVelX = 0.5f;
-float ProjectileVelY = 0.5f;
+float ProjectileVelX = 20.0f;
+float ProjectileVelY = 30.0f;
 
 void Game::Initialize(int width, int height) {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -61,8 +61,18 @@ void Game::ProcessInput() {
 }
 
 void Game::Update() {
-    ProjectilePosX += ProjectileVelX;
-    ProjectilePosY += ProjectileVelY;
+// Wait until 16.6ms has elapsed since the last frame.
+while(!SDL_TICKS_PASSED(SDL_GetTicks(), ticksLastFrame + FRAME_TARGET_TIME));
+// Delta time is the difference in ticks from last frame converted to seconds.
+float deltaTime = (SDL_GetTicks() - ticksLastFrame) / 1000.0f;
+
+deltaTime = (deltaTime > 0.05f) ? 0.05 : deltaTime;
+
+// Sets the new ticks for the current frame to be used in the next pass.
+ticksLastFrame = SDL_GetTicks();
+
+    ProjectilePosX += ProjectileVelX * deltaTime;
+    ProjectilePosY += ProjectileVelY * deltaTime;
 }
 
 // back buffer vs front buffer.
