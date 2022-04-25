@@ -67,7 +67,7 @@ void Game::Update() {
 int timeToWait = FRAME_TARGET_TIME - (SDL_GetTicks() - ticksLastFrame);
 
 if(timeToWait > 0 && timeToWait <= FRAME_TARGET_TIME) {
-    SDL_Delay(timeTOWait);
+    SDL_Delay(timeToWait);
 }
 
 // Delta time is the difference in ticks from last frame converted to seconds.
