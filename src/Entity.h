@@ -32,7 +32,6 @@ class Entity {
             newComponent->Initialize();
             return *newComponent;
         }
-
 };
 
 #endif
