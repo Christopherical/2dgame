@@ -4,16 +4,18 @@
 
 #include "../lib/glm/glm.hpp"
 #include "./AssetManager.h"
+#include "./Components/KeyboardControlComponent.h"
 #include "./Components/SpriteComponent.h"
 #include "./Components/TransformComponent.h"
+#include "./Components/ColliderComponent.h"
 #include "./Constants.h"
-#include "./Components/KeyboardControlComponent.h"
 #include "./Map.h"
 
 EntityManager manager;
 AssetManager* Game::assetManager = new AssetManager(&manager);
 SDL_Renderer* Game::renderer;
 SDL_Event Game::event;
+SDL_Rect Game::camera = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
 Map* map;
 
 Game::Game() { this->isRunning = false; }
@@ -49,6 +51,8 @@ void Game::Initialize(int width, int height) {
     return;
 }
 
+Entity& playerEntity(manager.AddEntity("player", PLAYER_LAYER));
+
 void Game::LoadLevel(int levelNumber) {
     // Start including new assets to the assetmanager list
     assetManager->AddTexture(
@@ -56,26 +60,29 @@ void Game::LoadLevel(int levelNumber) {
         std::string("./assets/images/tank-big-right.png").c_str());
 
     assetManager->AddTexture(
-        "chopper-image",
+        "player-image",
         std::string("./assets/images/chopper-spritesheet.png").c_str());
 
-    assetManager->AddTexture("jungle-tile-texture", std::string("./assets/tilemaps/jungle.png").c_str());
+    assetManager->AddTexture(
+        "jungle-tile-texture",
+        std::string("./assets/tilemaps/jungle.png").c_str());
 
-    map = new Map("jungle-tile-texture", 1, 32);
+    map = new Map("jungle-tile-texture", 2, 32);
     map->LoadMap("./assets/tilemaps/jungle.map", 25, 20);
 
     // Start including entities and also components to them
 
-    Entity& chopperEntity(manager.AddEntity("chopper", PLAYER_LAYER));
-    chopperEntity.AddComponent<TransformComponent>(240, 106, 0, 0, 32, 32, 1);
-    chopperEntity.AddComponent<SpriteComponent>("chopper-image", 2, 90, true,
-                                                false);
-    chopperEntity.AddComponent<KeyboardControlComponent>("up", "right", "down", "left", "space");                                        
-
+    playerEntity.AddComponent<TransformComponent>(240, 106, 0, 0, 32, 32, 1);
+    playerEntity.AddComponent<SpriteComponent>("player-image", 2, 90, true,
+                                               false);
+    playerEntity.AddComponent<KeyboardControlComponent>("up", "right", "down",
+                                                        "left", "space");
+    playerEntity.AddComponent<ColliderComponent>("PLAYER", 240, 106, 32, 32);
 
     Entity& tankEntity(manager.AddEntity("tank", ENEMY_LAYER));
     tankEntity.AddComponent<TransformComponent>(0, 0, 20, 20, 32, 32, 1);
     tankEntity.AddComponent<SpriteComponent>("tank-image");
+    tankEntity.AddComponent<ColliderComponent>("ENEMY", 150, 495, 32, 32);
 }
 
 void Game::ProcessInput() {
@@ -116,6 +123,9 @@ void Game::Update() {
     ticksLastFrame = SDL_GetTicks();
 
     manager.Update(deltaTime);
+
+    HandleCameraMovement();
+    CheckCollisions();
 }
 
 // back buffer vs front buffer.
@@ -129,6 +139,40 @@ void Game::Render() {
     manager.Render();
 
     SDL_RenderPresent(renderer);
+}
+
+void Game::HandleCameraMovement() {
+    TransformComponent* mainPlayerTransform =
+        playerEntity.GetComponent<TransformComponent>();
+
+    camera.x = mainPlayerTransform->position.x - (WINDOW_WIDTH / 2);
+    camera.y = mainPlayerTransform->position.y - (WINDOW_HEIGHT / 2);
+
+    // Clamping.
+    camera.x = camera.x < 0 ? 0 : camera.x;
+    camera.y = camera.y < 0 ? 0 : camera.y;
+    camera.x = camera.x > camera.w ? camera.w : camera.x;
+    camera.y = camera.y > camera.h ? camera.h : camera.y;
+}
+
+void Game::CheckCollisions() {
+    CollisionType collisionType = manager.CheckEntityCollisions();
+    if (collisionType == PLAYER_ENEMY_COLLISION) {
+        ProcessGameOver();
+    }
+    if (collisionType == PLAYER_LEVEL_COMPLETE_COLLISION) {
+        ProcessNextLevel(1);
+    }
+}
+
+void Game::ProcessNextLevel(int levelNumber) {
+    std::cout << "Next Level" << std::endl;
+    isRunning = false;
+}
+
+void Game::ProcessGameOver() {
+    std::cout << "Game Over" << std::endl;
+    isRunning = false;
 }
 
 void Game::Destroy() {

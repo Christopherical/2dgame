@@ -19,7 +19,8 @@ class KeyboardControlComponent : public Component {
     KeyboardControlComponent() {}
 
     KeyboardControlComponent(std::string upKey, std::string rightKey,
-                             std::string downKey, std::string leftKey, std::string shootKey) {
+                             std::string downKey, std::string leftKey,
+                             std::string shootKey) {
         this->upKey = GetSDLKeyStringCode(upKey);
         this->rightKey = GetSDLKeyStringCode(rightKey);
         this->downKey = GetSDLKeyStringCode(downKey);
@@ -46,23 +47,30 @@ class KeyboardControlComponent : public Component {
             std::string keyCode = std::to_string(Game::event.key.keysym.sym);
 
             if (keyCode.compare(upKey) == 0) {
-                transform->velocity.y = -50;
-                transform->velocity.x = 0;
-                sprite->Play("UpAnimation");
+                // TODO - Fix this?
+                if (transform->position.y != WINDOW_HEIGHT) {
+                    transform->velocity.y = -100;
+                    transform->velocity.x = 0;
+                    sprite->Play("UpAnimation");
+                } else {
+                    transform->velocity.y = 0;
+                    transform->velocity.x = 0;
+                    sprite->Play("UpAnimation");
+                }
             }
             if (keyCode.compare(rightKey) == 0) {
                 transform->velocity.y = 0;
-                transform->velocity.x = 50;
+                transform->velocity.x = 100;
                 sprite->Play("RightAnimation");
             }
             if (keyCode.compare(downKey) == 0) {
-                transform->velocity.y = 50;
+                transform->velocity.y = 100;
                 transform->velocity.x = 0;
                 sprite->Play("DownAnimation");
             }
             if (keyCode.compare(leftKey) == 0) {
                 transform->velocity.y = 0;
-                transform->velocity.x = -50;
+                transform->velocity.x = -100;
                 sprite->Play("LeftAnimation");
             }
             if (keyCode.compare(shootKey) == 0) {
